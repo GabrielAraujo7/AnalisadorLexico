@@ -1,0 +1,75 @@
+cup;
+parser Parser;
+symbol Sym;
+import java_cup.runtime.*;
+
+
+terminal IF, ELSE, WHILE, RETURN;
+terminal INT, VOID, DOUBLE;
+terminal String ID;
+terminal Integer NUMBER;
+terminal ASSIGN, PLUS, MINUS, TIMES, DIVIDE;
+terminal LPAREN, RPAREN, LBRACE, RBRACE, SEMI, COMMA;
+terminal LET;
+
+non terminal Object program, stmt_list, stmt;
+non terminal Object expr, var_decl, func;
+non terminal String type;
+
+precedence right IF;
+precedence right ELSE;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+
+start with program;
+
+parser code {:
+  public static void main(String[] stmt) throws Exception {
+    Parser p = new Parser(new AnalisadorLexico(System.in));
+    p.parse();
+  }
+:};
+
+// Programa principal
+program ::= stmt_list {: RESULT = null; :};
+
+// Lista de comandos
+stmt_list ::= /* vazio */ {: RESULT = null; :}
+            | stmt_list stmt {: RESULT = null; :}
+            ;
+
+// Comandos
+stmt ::= var_decl
+       | expr SEMI
+       | IF LPAREN expr RPAREN stmt %prec IF
+       | IF LPAREN expr RPAREN stmt ELSE stmt
+       | WHILE LPAREN expr RPAREN stmt
+       | RETURN expr SEMI
+       | LBRACE stmt_list RBRACE
+       | func
+       ;
+
+// Declaração de var_decliável
+var_decl ::= LET ID SEMI
+       | LET ID ASSIGN expr SEMI; 
+
+// Tipos
+type ::= INT {: RESULT = "int"; :}
+       | VOID {: RESULT = "void"; :}
+       | DOUBLE {: RESULT = "double"; :}
+       ;
+
+// Expressões
+expr ::= ID ASSIGN expr {: RESULT = null; :}
+       | expr PLUS expr {: RESULT = null; :}
+       | expr MINUS expr {: RESULT = null; :}
+       | expr TIMES expr {: RESULT = null; :}
+       | expr DIVIDE expr {: RESULT = null; :}
+       | ID {: RESULT = ((Symbol)ID).value; :}
+       | NUMBER {: RESULT = ((Symbol)NUMBER).value; :}
+       | LPAREN expr RPAREN {: RESULT = RESULT; :}
+       ;
+
+// Declaração de função
+func ::= type ID LPAREN RPAREN LBRACE stmt_list RBRACE
+       | ID LPAREN stmt_list RPAREN; // Chamada de funções
